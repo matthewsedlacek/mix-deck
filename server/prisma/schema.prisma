@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Studio {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now())
+
+  users           User[]
+  audioFiles      AudioFile[]
+  projects        Project[]
+  referenceBoards ReferenceBoard[]
+}
+
+model User {
+  id                  String  @id @default(cuid())
+  studioId            String
+  name                String
+  email               String  @unique
+  passwordHash        String
+  spotifyRefreshToken String?
+  lessonProgress      Json    @default("{}")
+
+  studio          Studio           @relation(fields: [studioId], references: [id])
+  uploadedFiles   AudioFile[]
+  createdProjects Project[]
+  projectVersions ProjectVersion[]
+  exports         Export[]
+  chatMessages    ChatMessage[]
+}
+
+model AudioFile {
+  id           String   @id @default(cuid())
+  studioId     String
+  title        String
+  artist       String?
+  durationMs   Int
+  bpm          Float?
+  bpmManual    Float?
+  key          String?
+  keyManual    String?
+  camelot      String?
+  fileUrl      String
+  peaksUrl     String?
+  artworkUrl   String?
+  uploadedById String
+  createdAt    DateTime @default(now())
+
+  studio     Studio        @relation(fields: [studioId], references: [id])
+  uploadedBy User          @relation(fields: [uploadedById], references: [id])
+  regions    NamedRegion[]
+  clips      Clip[]
+}
+
+model NamedRegion {
+  id          String @id @default(cuid())
+  audioFileId String
+  label       String
+  startMs     Int
+  endMs       Int
+
+  audioFile AudioFile @relation(fields: [audioFileId], references: [id], onDelete: Cascade)
+  clips     Clip[]
+}
+
+model Project {
+  id            String   @id @default(cuid())
+  studioId      String
+  name          String
+  goalStatement String   @default("")
+  masterBpm     Float    @default(120)
+  masterKey     String?
+  artworkUrl    String?
+  createdById   String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  studio      Studio           @relation(fields: [studioId], references: [id])
+  createdBy   User             @relation(fields: [createdById], references: [id])
+  versions    ProjectVersion[]
+  clips       Clip[]
+  transitions Transition[]
+  exports     Export[]
+  chat        ChatMessage[]
+}
+
+model ProjectVersion {
+  id          String   @id @default(cuid())
+  projectId   String
+  label       String
+  snapshot    Json
+  createdById String
+  createdAt   DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation(fields: [createdById], references: [id])
+}
+
+model Clip {
+  id             String   @id @default(cuid())
+  projectId      String
+  lane           Int
+  audioFileId    String
+  regionId       String?
+  startMs        Int
+  offsetMs       Int      @default(0)
+  durationMs     Int
+  gainDb         Float    @default(0)
+  fadeInMs       Int      @default(0)
+  fadeOutMs      Int      @default(0)
+  stretchRatio   Float    @default(1)
+  pitchSemitones Float    @default(0)
+  effects        Json     @default("{}")
+  createdAt      DateTime @default(now())
+
+  project         Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  audioFile       AudioFile    @relation(fields: [audioFileId], references: [id])
+  region          NamedRegion? @relation(fields: [regionId], references: [id])
+  transitionsFrom Transition[] @relation("fromClip")
+  transitionsTo   Transition[] @relation("toClip")
+}
+
+model Transition {
+  id         String @id @default(cuid())
+  projectId  String
+  fromClipId String
+  toClipId   String
+  type       String
+  curve      String @default("equal-power")
+  params     Json   @default("{}")
+
+  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  fromClip Clip    @relation("fromClip", fields: [fromClipId], references: [id], onDelete: Cascade)
+  toClip   Clip    @relation("toClip", fields: [toClipId], references: [id], onDelete: Cascade)
+}
+
+model Export {
+  id          String   @id @default(cuid())
+  projectId   String
+  format      String
+  fileUrl     String
+  durationMs  Int
+  createdById String
+  createdAt   DateTime @default(now())
+
+  project   Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User    @relation(fields: [createdById], references: [id])
+}
+
+model ReferenceBoard {
+  id       String @id @default(cuid())
+  studioId String
+  name     String
+  notes    String @default("")
+
+  studio Studio           @relation(fields: [studioId], references: [id])
+  tracks ReferenceTrack[]
+}
+
+model ReferenceTrack {
+  id             String  @id @default(cuid())
+  boardId        String
+  spotifyTrackId String
+  title          String
+  artist         String
+  artworkUrl     String?
+  note           String  @default("")
+
+  board ReferenceBoard @relation(fields: [boardId], references: [id], onDelete: Cascade)
+}
+
+model ChatMessage {
+  id        String   @id @default(cuid())
+  projectId String
+  userId    String?
+  role      String
+  content   String
+  actions   Json?
+  createdAt DateTime @default(now())
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User?   @relation(fields: [userId], references: [id])
+}

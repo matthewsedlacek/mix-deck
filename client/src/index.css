@@ -1,0 +1,39 @@
+@import "tailwindcss";
+
+@theme {
+  /* Dark, club-inspired base with one warm accent (amber-coral). */
+  --color-deck-950: #0b0b10;
+  --color-deck-900: #12121a;
+  --color-deck-800: #1b1b26;
+  --color-deck-700: #262634;
+  --color-deck-600: #34344a;
+  --color-deck-300: #9d9db3;
+  --color-deck-100: #e8e8f0;
+  --color-glow-500: #ff8a3d;
+  --color-glow-400: #ffa05e;
+  --color-glow-600: #e06f24;
+}
+
+body {
+  @apply bg-deck-950 text-deck-100 antialiased;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+.btn-primary,
+.btn-ghost {
+  @apply inline-flex items-center gap-2 rounded-lg px-4 py-2.5 font-medium transition-colors
+    disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer;
+}
+.btn-primary {
+  @apply bg-glow-500 text-deck-950 hover:bg-glow-400;
+}
+.btn-ghost {
+  @apply bg-deck-800 text-deck-100 hover:bg-deck-700;
+}
+.input {
+  @apply w-full rounded-lg bg-deck-800 border border-deck-600 px-3 py-2.5 text-deck-100
+    placeholder:text-deck-300/60 focus:outline-none focus:border-glow-500;
+}
+.card {
+  @apply rounded-xl bg-deck-900 border border-deck-700 p-6;
+}
