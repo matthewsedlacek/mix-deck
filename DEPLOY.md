@@ -17,10 +17,10 @@ SSH in (browser terminal or `ssh ubuntu@<static-ip>`):
 ```bash
 curl -fsSL https://get.docker.com | sudo sh
 sudo usermod -aG docker ubuntu && exit   # re-SSH so the group applies
-git clone <your-repo-url> mix-deck && cd mix-deck
+git clone https://github.com/matthewsedlacek/mix-deck.git && cd mix-deck
 ```
 
-(No GitHub repo yet? `git init --bare` on the instance and push to it, or `rsync` the project up — ask Claude to set this up.)
+(If the repo is private, create a fine-grained [personal access token](https://github.com/settings/personal-access-tokens) with read-only Contents access to this repo and use it as the password when cloning.)
 
 ## 3. Configure and launch
 
