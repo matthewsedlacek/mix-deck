@@ -1,0 +1,48 @@
+# Production stack for a single small instance (Lightsail/EC2).
+# Copy .env.production.example to .env on the instance first.
+# Run: docker compose -f docker-compose.prod.yml up -d --build
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: mixdeck
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: mixdeck
+    # Exposed so you can develop locally against this database.
+    # Restrict port 5432 to your home IP in the instance firewall!
+    ports:
+      - "5432:5432"
+    volumes:
+      - mixdeck_pgdata:/var/lib/postgresql/data
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql://mixdeck:${POSTGRES_PASSWORD}@db:5432/mixdeck
+      JWT_SECRET: ${JWT_SECRET:?set JWT_SECRET in .env}
+      INSECURE_COOKIES: ${INSECURE_COOKIES:-0}
+    volumes:
+      - mixdeck_uploads:/data/uploads
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      DOMAIN: ${DOMAIN:?set DOMAIN in .env}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - mixdeck_caddy_data:/data
+      - mixdeck_caddy_config:/config
+
+volumes:
+  mixdeck_pgdata:
+  mixdeck_uploads:
+  mixdeck_caddy_data:
+  mixdeck_caddy_config:

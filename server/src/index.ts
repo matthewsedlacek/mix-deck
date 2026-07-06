@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import fs from "node:fs";
+import path from "node:path";
 import { ZodError } from "zod";
 import { env } from "./env.js";
 import { authRouter } from "./routes/auth.js";
@@ -12,7 +13,8 @@ import { requireAuth } from "./middleware/auth.js";
 
 const app = express();
 
-app.use(cors({ origin: "http://localhost:5173", credentials: true }));
+app.set("trust proxy", 1); // behind Caddy in production
+if (env.corsOrigin) app.use(cors({ origin: env.corsOrigin, credentials: true }));
 app.use(express.json({ limit: "10mb" })); // peaks payloads
 app.use(cookieParser());
 
@@ -24,6 +26,16 @@ app.use("/api/projects", projectsRouter);
 // Uploaded audio + peaks. Auth-gated; per-studio isolation is by unguessable path segment (v1).
 fs.mkdirSync(env.uploadsDir, { recursive: true });
 app.use("/files", requireAuth, express.static(env.uploadsDir));
+
+// Production: serve the built SPA from this server (same origin as the API).
+if (env.clientDist) {
+  const indexHtml = path.join(env.clientDist, "index.html");
+  app.use(express.static(env.clientDist));
+  app.use((req, res, next) => {
+    if (req.method !== "GET" || req.path.startsWith("/api") || req.path.startsWith("/files")) return next();
+    res.sendFile(indexHtml); // SPA fallback for client-side routes
+  });
+}
 
 app.use((err: unknown, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   if (err instanceof ZodError) {

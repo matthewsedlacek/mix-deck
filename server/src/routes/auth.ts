@@ -2,17 +2,9 @@ import { Router } from "express";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../prisma.js";
-import { AUTH_COOKIE, requireAuth, signToken } from "../middleware/auth.js";
-import { env } from "../env.js";
+import { AUTH_COOKIE, cookieOptions, requireAuth, signToken } from "../middleware/auth.js";
 
 export const authRouter = Router();
-
-const cookieOptions = {
-  httpOnly: true,
-  sameSite: "lax" as const,
-  secure: env.isProduction,
-  maxAge: 30 * 24 * 60 * 60 * 1000,
-};
 
 const credentials = {
   name: z.string().min(1).max(80),

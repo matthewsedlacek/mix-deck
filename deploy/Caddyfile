@@ -1,0 +1,5 @@
+# DOMAIN=mix.example.com  -> automatic HTTPS via Let's Encrypt
+# DOMAIN=:80              -> plain HTTP (no domain yet; set INSECURE_COOKIES=1 too)
+{$DOMAIN} {
+	reverse_proxy app:4000
+}

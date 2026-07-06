@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 import { env } from "../env.js";
 
 export const AUTH_COOKIE = "mixdeck_token";
+export const cookieOptions = {
+  httpOnly: true,
+  sameSite: "lax" as const,
+  secure: env.secureCookies,
+  maxAge: 30 * 24 * 60 * 60 * 1000,
+};
 
 export interface AuthPayload {
   userId: string;
