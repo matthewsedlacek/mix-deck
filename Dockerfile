@@ -1,5 +1,7 @@
 # Builds both workspaces and runs the API server, which also serves the SPA.
 FROM node:20-slim AS build
+# openssl must match the runtime stage so prisma generate picks the same engine
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY client/package.json client/
