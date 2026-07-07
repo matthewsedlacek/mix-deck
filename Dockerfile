@@ -11,6 +11,8 @@ RUN cd server && npx prisma generate && npm run build
 RUN cd client && npm run build
 
 FROM node:20-slim
+# Prisma needs the openssl binary to pick the right query engine
+RUN apt-get update -y && apt-get install -y --no-install-recommends openssl && rm -rf /var/lib/apt/lists/*
 ENV NODE_ENV=production \
     CLIENT_DIST=/app/client/dist \
     UPLOADS_DIR=/data/uploads
